@@ -3,6 +3,14 @@ import requests, json
 import concurrent.futures
 import pandas as pd
 
+st.set_page_config(
+    page_title="Mini tool Keyword research",
+    page_icon="https://seoreporter.site/wp-content/uploads/2023/06/cropped-favicon-32x32.jpg",
+)
+
+
+
+
 LANG = ['vi', 'en']
 MAX_DEEP = 2
 MAX_RESULT = 500
@@ -38,15 +46,16 @@ def search(lang, query, max_deep = MAX_DEEP, max_result = MAX_RESULT):
 		  break
 	return full_results
 
-st.header("Tìm kiếm longtail keyword", divider="rainbow")
+st.header(":rainbow[Tìm kiếm longtail keyword]", divider="rainbow")
 cols = st.columns([2,10])
-lang = cols[0].selectbox("Chọn Ngôn ngữ", ('vi','en'))
-input_key = cols[1].text_input(label="nhập từ khóa", placeholder="search...")
-
+lang = cols[0].selectbox(":blue[Chọn Ngôn ngữ]", ('vi','en'))
+input_key = cols[1].text_input(label=":blue[nhập từ khóa]", placeholder="search...")
+st.divider()
+result_output = st.text("")
 if input_key or lang:
 	if input_key:
-		result_output = st.text("Loading data...")
-		data = list(search(lang, input_key, max_deep = MAX_DEEP, max_result = MAX_RESULT))
-		df = pd.DataFrame(data=data, columns=["Keyword"])
-		result_output.dataframe(df, use_container_width=True)
+		with st.spinner('Loading...'):
+			data = list(search(lang, input_key, max_deep = MAX_DEEP, max_result = MAX_RESULT))
+			df = pd.DataFrame(data=data, columns=["Keyword"])
+			result_output.dataframe(df, use_container_width=True)
 
