@@ -8,17 +8,22 @@ import pandas as pd
 
 model_name = 'bert-base-multilingual-uncased'
 model_path = './bert_model'
-if not os.path.exists(model_path):
-	os.makedirs(model_path, exist_ok=True)
-	model = SentenceTransformer(model_name)
-	model.save(model_path)
-else:
-	model = SentenceTransformer(model_path)
-	
+@st.cache_resource
+def get_model():
+	if not os.path.exists(model_path):
+		os.makedirs(model_path, exist_ok=True)
+		model = SentenceTransformer(model_name)
+		model.save(model_path)
+	else:
+		model = SentenceTransformer(model_path)
+	return model
+model = get_model()
 TRY_NUM = 30
 DATA_NUM = 500
 
 def keyword_grouping(list_key):
+	
+
 	data_len = len(list_key)
 
 	max_step = round(data_len/3)
