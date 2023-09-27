@@ -5,6 +5,7 @@ from sklearn.metrics import silhouette_score
 import numpy as np
 import csv, os
 import pandas as pd
+import time
 
 st.set_page_config(
     page_title="Mini tool Keyword group",
@@ -12,11 +13,10 @@ st.set_page_config(
 )
 
 
-model_name = 'bert-base-multilingual-uncased'
-model_path = './bert_model'
 @st.cache_resource
-def get_model():
-	print('start get model')
+def get_model(model_name, model_path):
+
+	print(f'start get model {model_name}')
 	if not os.path.exists(model_path):
 		print('download model')
 		os.makedirs(model_path, exist_ok=True)
@@ -25,40 +25,60 @@ def get_model():
 	else:
 		print('load model')
 		model = SentenceTransformer(model_path)
-	print('done get model')
+	print(f'done get model {model_name}')
 	return model
-model = get_model()
-TRY_NUM = 30
+
+base_model_name = 'bert-base-multilingual-uncased'
+en_model_name = 'bert-base-uncased'
+vi_model_name = 'vinai/phobert-large'
+
+base_model = get_model('bert-base-multilingual-uncased', './bert_model/bert_base_multilingual')
+en_model = get_model('bert-base-uncased', './bert_model/bert_base_uncased')
+vi_model = get_model('vinai/phobert-large', './bert_model/phobert_large')
+
 DATA_NUM = 500
+MAX_TEST = 15
 
-def keyword_grouping(list_key):
-	data_len = len(list_key)
-	max_step = round(data_len/3)
-	step = round(max_step/TRY_NUM)
-	step = step if step > 1 else 1
-	k_values = range(2, max_step, step)
-
-	best_score = -1
-	best_k = None
+def grouping(embeddings, k_values):
 	g_model = None
-
-	embeddings = model.encode(list_key)
-	progress_e.progress(30)
-
-	i = 0
+	best_score = -1
 	for k in k_values:
-		progress_e.progress(round(30+i*70/30))
-		kmeans = MiniBatchKMeans(n_clusters=k, random_state=0)
+		kmeans = MiniBatchKMeans(n_clusters=k, random_state=0, n_init="auto")
 		kmeans.fit(embeddings)
 		labels = kmeans.labels_
 		score = silhouette_score(embeddings, labels)
+		print(k, score)
 		if score > best_score:
 			best_score = score
-			best_k = k
 			g_model = kmeans
-		i+=1
-	labels = g_model.labels_
+		if score < 0.1:
+			break
+	return g_model
 
+def keyword_grouping(list_key):
+	print("______start keyword_grouping")
+	data_len = len(list_key)
+
+	start_time = time.time()
+	if lang=='global':
+		embeddings = base_model.encode(list_key)
+	elif lang=='vi':
+		embeddings = vi_model.encode(list_key)
+	elif lang == 'en':
+		embeddings = en_model.encode(list_key)
+
+	embeddings_time = time.time()
+
+	progress_e.progress(30)
+
+	step = round((data_len-3)/MAX_TEST)
+	k_values = range(3, data_len, step)
+	print('k_values', k_values)
+	g_model = grouping(embeddings, k_values)
+
+	group_time = time.time()
+
+	labels = g_model.labels_
 	output = []
 	for i in range(len(labels)):
 		output.append([list_key[i], int(labels[i])])
@@ -75,6 +95,8 @@ def show_mode(mode, result, result_output):
 		result_output.text(result)
 
 st.header(":rainbow[Nhóm từ khóa qua ngữ nghĩa]", divider="rainbow")
+
+lang = st.selectbox(":blue[Ngôn ngữ] ( :red[Chọn ngôn ngữ sẽ cho kết quả chính xác hơn] )", ("global","vi", "en"))
 input_data = st.text_area(label=":blue[Nhập danh sách từ khóa]", height=250, placeholder="Tỗi dòng là 1 từ khóa")
 st.divider()
 warning_e = st.text("")
@@ -83,44 +105,45 @@ progress_e = st.text("")
 summary_e = st.columns(3)
 show_mode_e = st.text("")
 
-if input_data:
-	input_data = input_data.split('\n')
-	input_data = list(set(input_data))
-	input_data_length = len(input_data)
-	if input_data_length>500 or input_data_length<15:
-		warning_e.warning(f"Lỗi: Số lượng từ khóa phải lớn hơn 15 và nhỏ hơn 500, số lượng bạn nhập là: {input_data_length}")
-	else:
-		with st.spinner('Loading...'):
-			result_header.subheader(":blue[Kết quả nhóm key]")
-			
-			summary_e[0].markdown("Tổng từ khóa")
-			summary_e[0].header(f":orange[{input_data_length}]")
-			summary_e[1].markdown("Tổng parent")
-			total_parent = summary_e[1].header(":orange[...]")
+if input_data or lang:
+	if input_data:
+		input_data = input_data.split('\n')
+		input_data = list(set(input_data))
+		input_data_length = len(input_data)
+		if input_data_length>500 or input_data_length<15:
+			warning_e.warning(f"Lỗi: Số lượng từ khóa phải lớn hơn 15 và nhỏ hơn 500, số lượng bạn nhập là: {input_data_length}")
+		else:
+			with st.spinner('Loading...'):
+				result_header.subheader(":blue[Kết quả nhóm key]")
+				
+				summary_e[0].markdown("Tổng từ khóa")
+				summary_e[0].header(f":orange[{input_data_length}]")
+				summary_e[1].markdown("Tổng parent")
+				total_parent = summary_e[1].header(":orange[...]")
 
-			progress_e.progress(5)
+				progress_e.progress(5)
 
-			result = keyword_grouping(input_data)
-			parent_count = len(set([item[1] for item in result]))
-			total_parent.header(f":orange[{parent_count}]")
+				result = keyword_grouping(input_data)
+				parent_count = len(set([item[1] for item in result]))
+				total_parent.header(f":orange[{parent_count}]")
 
-			progress_e.text('')
+				progress_e.text('')
 
-			list_e, group_e = show_mode_e.tabs(['List', 'Group'])
+				group_e, list_e  = show_mode_e.tabs(['Group', 'List'])
 
-			
-			with list_e:
-				df = pd.DataFrame(data=result, columns=['keywords', 'group'])
-				list_e.dataframe(df, use_container_width=True)
-			
-			with group_e:
-				result_dict = dict(())
-				for line in result:
-					if line[1] not in result_dict:
-						result_dict[line[1]] = [line[0]]
-					else:
-						result_dict[line[1]].append(line[0])
-				for item in result_dict:
-					df = pd.DataFrame(data=result_dict[item], columns=[f'Group {item}'])
-					group_e.dataframe(df, use_container_width=True, hide_index=True)
+				
+				with list_e:
+					df = pd.DataFrame(data=result, columns=['keywords', 'group'])
+					list_e.dataframe(df, use_container_width=True)
+				
+				with group_e:
+					result_dict = dict(())
+					for line in result:
+						if line[1] not in result_dict:
+							result_dict[line[1]] = [line[0]]
+						else:
+							result_dict[line[1]].append(line[0])
+					for item in result_dict:
+						df = pd.DataFrame(data=result_dict[item], columns=[f'Group {item}'])
+						group_e.dataframe(df, use_container_width=True, hide_index=True)
 
