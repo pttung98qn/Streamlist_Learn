@@ -39,21 +39,47 @@ vi_model = get_model('vinai/phobert-large', './bert_model/phobert_large')
 DATA_NUM = 500
 MAX_TEST = 15
 
+def get_range_loop(k_values):
+	output = [item for item in k_values]
+	if k_values.stop not in output:
+		output.append(k_values.stop)
+	return output
+
+
+def get_k_values(min, max):
+	step = round((max-min)/5)
+	step = step if step>1 else 1
+	return range(min, max, step)
+
+def get_new_k_values(k_values, i):
+	k_values = get_range_loop(k_values)
+	k_values_length = len(k_values)
+	if i == 0:
+		min = k_values[0]
+		max = k_values[1]
+	elif i==k_values_length-1:
+		min = k_values[k_values_length-2]
+		max = k_values[k_values_length-1]
+	else:
+		min = k_values[i-1]
+		max = k_values[i+1]
+	return get_k_values(min+1, max-1)
+
 def grouping(embeddings, k_values):
 	g_model = None
 	best_score = -1
-	for k in k_values:
+	best_k = -1
+	loop_range = get_range_loop(k_values)
+	for k in loop_range:
 		kmeans = MiniBatchKMeans(n_clusters=k, random_state=0, n_init="auto")
 		kmeans.fit(embeddings)
 		labels = kmeans.labels_
 		score = silhouette_score(embeddings, labels)
-		print(k, score)
 		if score > best_score:
 			best_score = score
 			g_model = kmeans
-		if score < 0.1:
-			break
-	return g_model
+			best_k = k
+	return {'g_model':g_model, 'best_k_index': loop_range.index(best_k)}
 
 def keyword_grouping(list_key):
 	print("______start keyword_grouping")
@@ -71,10 +97,16 @@ def keyword_grouping(list_key):
 
 	progress_e.progress(30)
 
-	step = round((data_len-3)/MAX_TEST)
-	k_values = range(3, data_len, step)
-	print('k_values', k_values)
-	g_model = grouping(embeddings, k_values)
+	k_values = get_k_values(2, data_len)
+	g_model = None
+	while True:
+		output = grouping(embeddings, k_values)
+		g_model = output['g_model']
+		best_k_index = output['best_k_index']
+		print(get_range_loop(k_values), best_k_index, get_range_loop(k_values)[best_k_index])
+		if k_values.step==1:
+			break
+		k_values = get_new_k_values(k_values, best_k_index)
 
 	group_time = time.time()
 
