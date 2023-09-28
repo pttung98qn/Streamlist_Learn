@@ -110,7 +110,7 @@ def keyword_grouping():
 
 	progress_e.progress(30)
 
-	k_values = get_k_values(2, data_len)
+	k_values = get_k_values(5, data_len)
 	while True:
 		best_k = grouping(embeddings, k_values)
 		if k_values.step==1:
@@ -143,7 +143,7 @@ def show_mode(mode, result, result_output):
 def load_out_data(k):
 	result = get_k_cluster_data(k)
 	parent_count = len(set([item[1] for item in result]))	
-	summary_e[1].header(f":orange[{parent_count}]")
+	parent_count_e.header(f":orange[{parent_count}]")
 	with list_e:
 		df = pd.DataFrame(data=result, columns=['keywords', 'group'])
 		list_e.dataframe(df, use_container_width=True)
@@ -171,7 +171,7 @@ def load_out_data(k):
 	group_time = round(time_run['group_time'],3)
 	time_run_e[0].text(f'embeddings time : {embeddings_time}')
 	time_run_e[1].text(f'group time  : {group_time}')
-	time_run_e[3].selectbox("Chọn k: ", tuple([item[0] for item in ss_data_list]), key="select_k")
+	time_run_e[2].selectbox("Chọn k: ", tuple([item[0] for item in ss_data_list]), key="select_k")
 	
 def run():
 	if st.session_state['reload']:
@@ -186,7 +186,7 @@ def run():
 		warning_e.warning(f"Lỗi: Số lượng từ khóa phải lớn hơn 15 và nhỏ hơn 500, số lượng bạn nhập là: {input_data_length}")
 	else:
 		with st.spinner('Loading...'):
-			summary_e[1].header(":orange[...]")
+			parent_count_e.header(":orange[...]")
 			progress_e.progress(5)
 			if st.session_state['reload']:
 				best_k = keyword_grouping()
@@ -206,6 +206,7 @@ progress_e = st.text("")
 summary_e = st.columns(3)
 summary_e[0].markdown("Tổng từ khóa")
 summary_e[1].markdown("Tổng parent")
+parent_count_e = summary_e[1].header("")
 st.divider()
 chart_e = st.columns([9,3])
 time_run_e = st.columns(3)
@@ -226,5 +227,4 @@ if input_data:
 		st.session_state['reload'] = True
 		st.session_state['input_data'] = input_data
 		st.session_state['lang'] = lang
-	print("st.session_state['reload']", st.session_state['reload'])
 	run()
