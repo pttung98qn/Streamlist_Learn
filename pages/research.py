@@ -3,12 +3,15 @@ import requests, json
 import concurrent.futures
 import pandas as pd
 
+page_title = 'Mini tool Keyword research'
 st.set_page_config(
-    page_title="Mini tool Keyword research",
+    page_title=page_title,
     page_icon="https://seoreporter.site/wp-content/uploads/2023/06/cropped-favicon-32x32.jpg",
 )
 
-
+if 'current_page' not in st.session_state or  page_title != st.session_state['current_page']:
+	st.session_state['current_page'] = page_title
+	st.session_state['first_run'] = True
 
 
 LANG = ['vi', 'en']
