@@ -46,7 +46,10 @@ def search(lang, query, max_deep = MAX_DEEP, max_result = MAX_RESULT):
 		new_search = this_round_new_key.difference(searched)
 		i=i+1
 		if i> max_deep:
-		  break
+		  	break
+		if len(full_results)>=max_result:
+			break
+		new_search = list(new_search)[:round((max_result-len(full_results))/3)]
 	return full_results
 
 st.header(":rainbow[Tìm kiếm longtail keyword]", divider="rainbow")
@@ -54,11 +57,16 @@ cols = st.columns([2,10])
 lang = cols[0].selectbox(":blue[Chọn Ngôn ngữ]", ('vi','en'))
 input_key = cols[1].text_input(label=":blue[nhập từ khóa]", placeholder="search...")
 st.divider()
+result_count = st.text("")
 result_output = st.text("")
+
 if input_key or lang:
 	if input_key:
 		with st.spinner('Loading...'):
 			data = list(search(lang, input_key, max_deep = MAX_DEEP, max_result = MAX_RESULT))
 			df = pd.DataFrame(data=data, columns=["Keyword"])
+
+			data_len = len(data)
+			result_count.subheader(f"Tìm thấy {data_len}+ từ khoá")
 			result_output.dataframe(df, use_container_width=True)
 
