@@ -35,9 +35,9 @@ def get_model(model_name, model_path):
 	return model
 print('step 1')
 
+vi_model = get_model('vinai/phobert-large', './bert_model/phobert_large')
 base_model = get_model('bert-base-multilingual-uncased', './bert_model/bert_base_multilingual')
 # en_model = get_model('bert-base-uncased', './bert_model/bert_base_uncased')
-vi_model = get_model('vinai/phobert-large', './bert_model/phobert_large')
 
 DATA_NUM = 500
 MAX_TEST = 15
