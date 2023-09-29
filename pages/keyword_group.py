@@ -19,21 +19,28 @@ if 'current_page' not in st.session_state or  page_title != st.session_state['cu
 
 
 print('step 0')
+# @st.cache_resource
+# def get_model(model_name, model_path):
+# 	print(f'start get model {model_name}')
+# 	if not os.path.exists(model_path):
+# 		print('download model')
+# 		os.makedirs(model_path, exist_ok=True)
+# 		model = SentenceTransformer(model_name)
+# 		model.save(model_path)
+# 	else:
+# 		print('load model')
+# 		model = SentenceTransformer(model_path)
+# 	print(f'done get model {model_name}')
+# 	return model
+# print('step 1')
+
 @st.cache_resource
 def get_model(model_name, model_path):
-
 	print(f'start get model {model_name}')
-	if not os.path.exists(model_path):
-		print('download model')
-		os.makedirs(model_path, exist_ok=True)
-		model = SentenceTransformer(model_name)
-		model.save(model_path)
-	else:
-		print('load model')
-		model = SentenceTransformer(model_path)
+	os.makedirs(model_path, exist_ok=True)
+	model = SentenceTransformer(model_name)
 	print(f'done get model {model_name}')
 	return model
-print('step 1')
 
 vi_model = get_model('vinai/phobert-large', './bert_model/phobert_large')
 base_model = get_model('bert-base-multilingual-uncased', './bert_model/bert_base_multilingual')
