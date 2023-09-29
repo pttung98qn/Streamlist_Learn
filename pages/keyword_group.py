@@ -36,7 +36,7 @@ def get_model(model_name, model_path):
 print('step 1')
 
 base_model = get_model('bert-base-multilingual-uncased', './bert_model/bert_base_multilingual')
-en_model = get_model('bert-base-uncased', './bert_model/bert_base_uncased')
+# en_model = get_model('bert-base-uncased', './bert_model/bert_base_uncased')
 vi_model = get_model('vinai/phobert-large', './bert_model/phobert_large')
 
 DATA_NUM = 500
@@ -97,12 +97,12 @@ def keyword_grouping():
 	data_len = len(list_key)
 
 	start_time = time.time()
-	if lang=='global':
+	if lang=='order/multiple language':
 		embeddings = base_model.encode(list_key)
 	elif lang=='vi':
 		embeddings = vi_model.encode(list_key)
-	elif lang == 'en':
-		embeddings = en_model.encode(list_key)
+	# elif lang == 'en':
+	# 	embeddings = en_model.encode(list_key)
 	st.session_state['embeddings'] = embeddings
 
 	embeddings_time = time.time()
@@ -164,7 +164,7 @@ def load_out_data(k):
 	ss_data_df = pd.DataFrame(ss_data_list, columns=['k', 'score'])
 
 	chart_e[0].line_chart(data=ss_data_df, x='k', y='score', use_container_width=True, height=400)
-	chart_e[1].dataframe(ss_data_df, use_container_width=True, height=350)
+	chart_e[1].dataframe(ss_data_df, use_container_width=True, height=350, hide_index=True)
 
 	time_run = st.session_state['time_run']
 	embeddings_time = round(time_run['embeddings'],3)
@@ -197,7 +197,8 @@ def run():
 
 st.session_state['first_run'] = False
 st.header(":rainbow[Nhóm từ khóa qua ngữ nghĩa]", divider="rainbow")
-lang = st.selectbox(":blue[Ngôn ngữ] ( :red[Chọn ngôn ngữ sẽ cho kết quả chính xác hơn] )", ("global","vi", "en"))
+st.warning("Nếu từ khóa chỉ bao gồm tiếng việt thì chọn 'vi', nếu là tiếng anh, ngôn ngữ khác hoặc kết hợp nhiều ngôn ngữ thì chọn 'order/multiple language'")
+lang = st.selectbox(":blue[Ngôn ngữ]", ("vi", "order/multiple language"))
 input_data = st.text_area(label=":blue[Nhập danh sách từ khóa]", height=250, placeholder="Tỗi dòng là 1 từ khóa")
 st.divider()
 warning_e = st.text("")
@@ -210,6 +211,7 @@ parent_count_e = summary_e[1].header("")
 st.divider()
 chart_e = st.columns([9,3])
 time_run_e = st.columns(3)
+st.warning("'k' là số nhóm, mặc định k được chọn sẽ có score lớn nhất, Bạn có thể test các 'k' khác nhau để thử nghiệm. Khuyến khích chọn các 'k' là đỉnh sóng trong biểu đồ.")
 
 group_e, list_e  = st.tabs(['Group', 'List'])
 
