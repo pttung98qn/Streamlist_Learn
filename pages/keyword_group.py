@@ -35,15 +35,18 @@ print('step 0')
 # print('step 1')
 
 @st.cache_resource
-def get_model(model_name, model_path):
+def get_model(model_name):
 	print(f'start get model {model_name}')
-	os.makedirs(model_path, exist_ok=True)
 	model = SentenceTransformer(model_name)
 	print(f'done get model {model_name}')
+	
+	if model_name == 'vinai/phobert-large':
+		model.save('/home/appuser/.cache/torch/sentence_transformers/vinai_phobert-large')
+	
 	return model
 
-vi_model = get_model('vinai/phobert-large', './bert_model/phobert_large')
-base_model = get_model('bert-base-multilingual-uncased', './bert_model/bert_base_multilingual')
+vi_model = get_model('vinai/phobert-large')
+base_model = get_model('bert-base-multilingual-uncased')
 # en_model = get_model('bert-base-uncased', './bert_model/bert_base_uncased')
 
 DATA_NUM = 500
