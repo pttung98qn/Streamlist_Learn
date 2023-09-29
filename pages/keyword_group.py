@@ -36,10 +36,10 @@ print('step 0')
 
 @st.cache_resource
 def get_model(model_name):
-	print(f'start get model {model_name}')
+	print(f'start get model: {model_name}')
 	model = SentenceTransformer(model_name)
-	print(f'done get model {model_name}')
-	
+	print(f'done get model: {model_name}')
+
 	if model_name == 'vinai/phobert-large':
 		model.save('/home/appuser/.cache/torch/sentence_transformers/vinai_phobert-large')
 	
