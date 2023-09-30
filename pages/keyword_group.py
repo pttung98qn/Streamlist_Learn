@@ -19,35 +19,25 @@ if 'current_page' not in st.session_state or  page_title != st.session_state['cu
 
 
 print('step 0')
-# @st.cache_resource
-# def get_model(model_name, model_path):
-# 	print(f'start get model {model_name}')
-# 	if not os.path.exists(model_path):
-# 		print('download model')
-# 		os.makedirs(model_path, exist_ok=True)
-# 		model = SentenceTransformer(model_name)
-# 		model.save(model_path)
-# 	else:
-# 		print('load model')
-# 		model = SentenceTransformer(model_path)
-# 	print(f'done get model {model_name}')
-# 	return model
+@st.cache_resource
+def get_model(model_name, model_path):
+	print(f'start get model {model_name}')
+	if not os.path.exists(model_path):
+		print('download model')
+		os.makedirs(model_path, exist_ok=True)
+		model = SentenceTransformer(model_name)
+		model.save(model_path)
+	else:
+		print('load model')
+		model = SentenceTransformer(model_path)
+	print(f'done get model {model_name}')
+	return model
 # print('step 1')
 
-@st.cache_resource
-def get_model(model_name):
-	print(f'start get model: {model_name}')
-	model = SentenceTransformer(model_name)
-	print(f'done get model: {model_name}')
 
-	if model_name == 'vinai/phobert-large':
-		model.save('/home/appuser/.cache/torch/sentence_transformers/vinai_phobert-large')
-	
-	return model
-
-vi_model = get_model('vinai/phobert-large')
-base_model = get_model('bert-base-multilingual-uncased')
-# en_model = get_model('bert-base-uncased', './bert_model/bert_base_uncased')
+vi_model = get_model('vinai/phobert-large', './bert_model/phobert_large')
+base_model = get_model('bert-base-multilingual-uncased', './bert_model/bert_base_multilingual')
+en_model = get_model('bert-base-uncased', './bert_model/bert_base_uncased')
 
 DATA_NUM = 500
 MAX_TEST = 15
@@ -111,8 +101,8 @@ def keyword_grouping():
 		embeddings = base_model.encode(list_key)
 	elif lang=='vi':
 		embeddings = vi_model.encode(list_key)
-	# elif lang == 'en':
-	# 	embeddings = en_model.encode(list_key)
+	elif lang == 'en':
+		embeddings = en_model.encode(list_key)
 	st.session_state['embeddings'] = embeddings
 
 	embeddings_time = time.time()
@@ -208,7 +198,7 @@ def run():
 st.session_state['first_run'] = False
 st.header(":rainbow[Nhóm từ khóa qua ngữ nghĩa]", divider="rainbow")
 st.warning("Nếu từ khóa chỉ bao gồm tiếng việt thì chọn 'vi', nếu là tiếng anh, ngôn ngữ khác hoặc kết hợp nhiều ngôn ngữ thì chọn 'order/multiple language'")
-lang = st.selectbox(":blue[Ngôn ngữ]", ("vi", "order/multiple language"))
+lang = st.selectbox(":blue[Ngôn ngữ]", ("vi","en", "order/multiple language"))
 input_data = st.text_area(label=":blue[Nhập danh sách từ khóa]", height=250, placeholder="Tỗi dòng là 1 từ khóa")
 st.divider()
 warning_e = st.text("")
